@@ -633,8 +633,8 @@ async function addLiquidity(amountEth, maxSlippagePct) {
   var max_exchange_rate = poolState.token_eth_rate*100+maxSlippagePct;
   var min_exchange_rate = poolState.token_eth_rate*100-maxSlippagePct;
   var amountToken = amountEth*max_exchange_rate/100;
-  await token_contract.connect(provider.getSigner(defaultAccount)).approve(exchange_address,amountToken);
-  await exchange_contract.connect(provider.getSigner(defaultAccount)).addLiquidity(max_exchange_rate, min_exchange_rate, {value: ethers.utils.parseUnits(amountEth.toString(),"wei")});
+  await token_contract.connect(provider.getSigner(defaultAccount)).approve(exchange_address,parseInt(amountToken));
+  await exchange_contract.connect(provider.getSigner(defaultAccount)).addLiquidity(parseInt(max_exchange_rate), parseInt(min_exchange_rate), {value: ethers.utils.parseUnits(amountEth.toString(),"wei")});
 }
 
 /*** REMOVE LIQUIDITY ***/
@@ -643,7 +643,7 @@ async function removeLiquidity(amountEth, maxSlippagePct) {
   var poolState = await getPoolState();
   var max_exchange_rate = poolState.token_eth_rate*100+maxSlippagePct;
   var min_exchange_rate = poolState.token_eth_rate*100-maxSlippagePct;
-  await exchange_contract.connect(provider.getSigner(defaultAccount)).removeLiquidity(ethers.utils.parseUnits(amountEth.toString(),"wei"), max_exchange_rate, min_exchange_rate);
+  await exchange_contract.connect(provider.getSigner(defaultAccount)).removeLiquidity(ethers.utils.parseUnits(amountEth.toString(),"wei"), parseInt(max_exchange_rate), parseInt(min_exchange_rate));
 }
 
 async function removeAllLiquidity(maxSlippagePct) {
@@ -651,15 +651,14 @@ async function removeAllLiquidity(maxSlippagePct) {
   var poolState = await getPoolState();
   var max_exchange_rate = poolState.token_eth_rate*100+maxSlippagePct;
   var min_exchange_rate = poolState.token_eth_rate*100-maxSlippagePct;
-  await exchange_contract.connect(provider.getSigner(defaultAccount)).removeAllLiquidity(max_exchange_rate, min_exchange_rate);
+  await exchange_contract.connect(provider.getSigner(defaultAccount)).removeAllLiquidity(parseInt(max_exchange_rate), parseInt(min_exchange_rate));
 }
 
 /*** SWAP ***/
 async function swapTokensForETH(amountToken, maxSlippagePct) {
     /** TODO: ADD YOUR CODE HERE **/
   var poolState = await getPoolState();
-  var max_exchange_rate = poolState.token_eth_rate*100+maxSlippagePct;
-  console.log(max_exchange_rate);
+  var max_exchange_rate = poolState.eth_token_rate*100+maxSlippagePct;
   await token_contract.connect(provider.getSigner(defaultAccount)).approve(exchange_address,amountToken);
   await exchange_contract.connect(provider.getSigner(defaultAccount)).swapTokensForETH(amountToken,parseInt(max_exchange_rate));
 }
@@ -667,7 +666,7 @@ async function swapTokensForETH(amountToken, maxSlippagePct) {
 async function swapETHForTokens(amountEth, maxSlippagePct) {
     /** TODO: ADD YOUR CODE HERE **/
   var poolState = await getPoolState();
-  var max_exchange_rate = poolState.eth_token_rate*100+maxSlippagePct;
+  var max_exchange_rate = poolState.token_eth_rate*100+maxSlippagePct;
   await exchange_contract.connect(provider.getSigner(defaultAccount)).swapETHForTokens(parseInt(max_exchange_rate), {value: ethers.utils.parseUnits(amountEth.toString(),"wei")});
 }
 
