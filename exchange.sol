@@ -92,12 +92,21 @@ contract TokenExchange is Ownable {
         equivalent_token /= PCT;
         require(token.allowance(msg.sender, address(this)) >= equivalent_token, "not enough token in account");
         token.transferFrom(msg.sender, address(this), equivalent_token);
-        for (uint idx = 0; idx < lp_providers.length; idx++) {
-            lps[lp_providers[idx]] = lps[lp_providers[idx]] * eth_reserves / (eth_reserves+msg.value);
-        }
         token_reserves += equivalent_token;
+        for (uint idx = 0; idx < lp_providers.length; idx++) {
+            lps[lp_providers[idx]] *= eth_reserves / (eth_reserves+msg.value);
+        }
+        bool sender_in_lps = false;
+        for (uint idx = 0; idx < lp_providers.length; idx++) {
+            if (lp_providers[idx] == msg.sender) {
+                sender_in_lps = true;
+                break;
+            }
+        }
+        if (!sender_in_lps) {
+            lp_providers.push(msg.sender);
+        }
         eth_reserves += msg.value;
-        lp_providers.push(msg.sender);
         lps[msg.sender] += msg.value*MULTIPLIER/eth_reserves;
         k = address(this).balance*token.balanceOf(address(this));
         assert(token_reserves == token.balanceOf(address(this)));
@@ -129,11 +138,11 @@ contract TokenExchange is Ownable {
             }
         }
         for (uint idx = 0; idx < lp_providers.length; idx++){
-            lps[lp_providers[idx]] =  lps[lp_providers[idx]] * eth_reserves / (eth_reserves-amountETH);
+            lps[lp_providers[idx]] *= eth_reserves / (eth_reserves-amountETH);
         }
         token.transfer(msg.sender, equivalent_token);
-        payable(msg.sender).transfer(amountETH);
         token_reserves -= equivalent_token;
+        payable(msg.sender).transfer(amountETH);
         eth_reserves -= amountETH;
         k = address(this).balance*token.balanceOf(address(this));
         assert(token_reserves == token.balanceOf(address(this)));
@@ -148,11 +157,11 @@ contract TokenExchange is Ownable {
     {
         /******* TODO: Implement this function *******/
         uint amountETH = lps[msg.sender]*eth_reserves/MULTIPLIER;
+        require(amountETH < eth_reserves, "not enough ETH in pool");
         uint equivalent_token = amountETH*token_reserves*PCT/eth_reserves;
         require(equivalent_token >= min_exchange_rate*amountETH, "exchange rate too low");
         require(equivalent_token <= max_exchange_rate*amountETH, "exchange rate too high");
         equivalent_token /= PCT;
-        require(amountETH < eth_reserves, "not enough ETH in pool");
         require(equivalent_token < token_reserves, "not enough token in pool");
         lps[msg.sender] = 0;
         for (uint idx = 0; idx < lp_providers.length; idx++){
@@ -162,11 +171,11 @@ contract TokenExchange is Ownable {
             }
         }
         for (uint idx = 0; idx < lp_providers.length; idx++){
-            lps[lp_providers[idx]] =  lps[lp_providers[idx]] * eth_reserves / (eth_reserves-amountETH);
+            lps[lp_providers[idx]] *= eth_reserves / (eth_reserves-amountETH);
         }
         token.transfer(msg.sender, equivalent_token);
-        payable(msg.sender).transfer(amountETH);
         token_reserves -= equivalent_token;
+        payable(msg.sender).transfer(amountETH);
         eth_reserves -= amountETH;
         k = address(this).balance*token.balanceOf(address(this));
         assert(token_reserves == token.balanceOf(address(this)));
@@ -210,7 +219,7 @@ contract TokenExchange is Ownable {
         /******* TODO: Implement this function *******/
         uint equivalent_token = token_reserves*msg.value*PCT/(eth_reserves+msg.value);
         require(equivalent_token <= max_exchange_rate*msg.value, "exchange rate too high");
-        equivalent_token /= 100;
+        equivalent_token /= PCT;
         require(equivalent_token < token_reserves, "not enough token for exchange in pool");
         eth_reserves += msg.value;
         token.transfer(msg.sender, equivalent_token);
