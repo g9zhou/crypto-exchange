@@ -94,7 +94,7 @@ contract TokenExchange is Ownable {
         token.transferFrom(msg.sender, address(this), equivalent_token);
         token_reserves += equivalent_token;
         for (uint idx = 0; idx < lp_providers.length; idx++) {
-            lps[lp_providers[idx]] *= eth_reserves / (eth_reserves+msg.value);
+            lps[lp_providers[idx]] = lps[lp_providers[idx]] * eth_reserves / (eth_reserves+msg.value);
         }
         bool sender_in_lps = false;
         for (uint idx = 0; idx < lp_providers.length; idx++) {
@@ -138,7 +138,7 @@ contract TokenExchange is Ownable {
             }
         }
         for (uint idx = 0; idx < lp_providers.length; idx++){
-            lps[lp_providers[idx]] *= eth_reserves / (eth_reserves-amountETH);
+            lps[lp_providers[idx]] = lps[lp_providers[idx]] * eth_reserves / (eth_reserves-amountETH);
         }
         token.transfer(msg.sender, equivalent_token);
         token_reserves -= equivalent_token;
