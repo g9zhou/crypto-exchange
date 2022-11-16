@@ -157,29 +157,7 @@ contract TokenExchange is Ownable {
     {
         /******* TODO: Implement this function *******/
         uint amountETH = lps[msg.sender]*eth_reserves/MULTIPLIER;
-        require(amountETH < eth_reserves, "not enough ETH in pool");
-        uint equivalent_token = amountETH*token_reserves*PCT/eth_reserves;
-        require(equivalent_token >= min_exchange_rate*amountETH, "exchange rate too low");
-        require(equivalent_token <= max_exchange_rate*amountETH, "exchange rate too high");
-        equivalent_token /= PCT;
-        require(equivalent_token < token_reserves, "not enough token in pool");
-        lps[msg.sender] = 0;
-        for (uint idx = 0; idx < lp_providers.length; idx++){
-            if (lp_providers[idx] == msg.sender) {
-                removeLP(idx);
-                break;
-            }
-        }
-        for (uint idx = 0; idx < lp_providers.length; idx++){
-            lps[lp_providers[idx]] *= eth_reserves / (eth_reserves-amountETH);
-        }
-        token.transfer(msg.sender, equivalent_token);
-        token_reserves -= equivalent_token;
-        payable(msg.sender).transfer(amountETH);
-        eth_reserves -= amountETH;
-        k = address(this).balance*token.balanceOf(address(this));
-        assert(token_reserves == token.balanceOf(address(this)));
-        assert(eth_reserves == address(this).balance);
+        removeLiquidity(amountETH, max_exchange_rate, min_exchange_rate);
     }
     /***  Define additional functions for liquidity fees here as needed ***/
 
