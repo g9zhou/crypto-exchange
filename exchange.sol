@@ -15,11 +15,13 @@ contract TokenExchange is Ownable {
     // Liquidity pool for the exchange
     uint private token_reserves = 0;
     uint private eth_reserves = 0;
+    
+    // Temporarily save exchange fee
     uint private uninvested_ETH = 0;
     uint private uninvested_token = 0;
 
     mapping(address => uint) private lps;
-    mapping(address => mapping(string => uint)) private lpr;
+    mapping(address => mapping(string => uint)) private lpr;        // liquidity provider reward
     uint MULTIPLIER = 100000;
     uint PCT = 100;
      
@@ -160,8 +162,8 @@ contract TokenExchange is Ownable {
     //     uint equivalent_token = amountETH*token.balanceOf(address(this))*PCT/address(this).balance;
     //     require(equivalent_token >= min_exchange_rate*amountETH, "exchange rate too low");
     //     require(equivalent_token <= max_exchange_rate*amountETH, "exchange rate too high");
-    //     uint reward_token = lpr[msg.sender]["token"]*PCT*amountETH/(swap_fee_denominator*lps[msg.sender]*address(this).balance);
-    //     uint reward_ETH = lpr[msg.sender]["ETH"]*PCT*amountETH/(swap_fee_denominator*lps[msg.sender]*address(this).balance);
+    //     uint reward_token = lpr[msg.sender]["token"]*PCT*amountETH/(swap_fee_denominator*lps[msg.sender]*address(this).balance); // compute reward in token
+    //     uint reward_ETH = lpr[msg.sender]["ETH"]*PCT*amountETH/(swap_fee_denominator*lps[msg.sender]*address(this).balance); // compute reward in ETH
     //     equivalent_token = (equivalent_token+reward_token)/PCT;
     //     amountETH += reward_ETH/swap_fee_denominator;
     //     require(equivalent_token < token.balanceOf(address(this)), "not enough token in pool");
@@ -246,6 +248,7 @@ contract TokenExchange is Ownable {
     //     uninvested_token += swap_fee_token;
     //     token_reserves += amountTokens;
     //     uint ETH_to_invest = uninvested_token*eth_reserves/token_reserves;
+    //     // compare uninvested token and uninvested eth. if uninvested eth < uninvested token, invest all uninvest eth. if uninvested eth > uninvested token, invest all uninvested token
     //     if (uninvested_ETH < ETH_to_invest){
     //         eth_reserves += uninvested_ETH/swap_fee_denominator;
     //         token_reserves += uninvested_ETH*token_reserves/(eth_reserves*swap_fee_denominator);
