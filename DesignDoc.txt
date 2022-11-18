@@ -16,7 +16,13 @@ Doing so results in (y+Δy)/(x+Δx) = (y+Δy)/(x+Δy/M) = (My+MΔy)/(Mx+Δy) = M
 
 
 # TODO: answer question 2 here
-
+1. every eth and token exchange is charged 2% fee.
+2. When swap, the user only get 98% worth of their swapping asset.
+3. A mapping of liquidity provider to reward in both ETH and token is used for storing reward. The amount of reward is saved as actual number of ETH or token. The rewards are assigned based on their fractional share of liquidity pool 
+at the moment of the swap. When liquidity providers remove liquidity, their reward will also be returned to them based on the portion of liquidity they are withdrawing. If a liquidity provider withdraws all of his liquidity, all reward
+will be returned. if he only withdraws half of his liquidity, only half of the reward will be returned.
+4. when charging exchange fee, the fee will be saved as uninvested_token and uninvested_eth. The algorithm will do nothing if either one of those value is zero. When after an exchange, both values are nonzero, the smaller worth of 
+uninvested_token and uninvested_eth will be reinvested back into the pool along with equivalent amount of the other coin based on their exchange rate at that moment.
 
 3. Describe at least one method you used to minimize your exchange contract's gas usage. Why was this method effective?
 
