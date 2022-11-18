@@ -15,8 +15,11 @@ contract TokenExchange is Ownable {
     // Liquidity pool for the exchange
     uint private token_reserves = 0;
     uint private eth_reserves = 0;
+    uint private uninvested_ETH = 0;
+    uint private uninvested_token = 0;
 
     mapping(address => uint) private lps;
+    mapping(address => mapping(string => uint)) private lpr;
     uint MULTIPLIER = 100000;
     uint PCT = 100;
      
@@ -24,8 +27,8 @@ contract TokenExchange is Ownable {
     address[] private lp_providers;                     
 
     // liquidity rewards
-    uint private swap_fee_numerator = 0;                // TODO Part 5: Set liquidity providers' returns.
-    uint private swap_fee_denominator = 0;
+    uint private swap_fee_numerator = 2;                // TODO Part 5: Set liquidity providers' returns.
+    uint private swap_fee_denominator = 100;
 
     // Constant: x * y = k
     uint private k;
@@ -109,8 +112,8 @@ contract TokenExchange is Ownable {
         eth_reserves += msg.value;
         lps[msg.sender] += msg.value*MULTIPLIER/eth_reserves;
         k = address(this).balance*token.balanceOf(address(this));
-        assert(token_reserves == token.balanceOf(address(this)));
-        assert(eth_reserves == address(this).balance);
+        // assert(token_reserves == token.balanceOf(address(this)));
+        // assert(eth_reserves == address(this).balance);
     }
 
 
@@ -145,9 +148,47 @@ contract TokenExchange is Ownable {
         payable(msg.sender).transfer(amountETH);
         eth_reserves -= amountETH;
         k = address(this).balance*token.balanceOf(address(this));
-        assert(token_reserves == token.balanceOf(address(this)));
-        assert(eth_reserves == address(this).balance);
+        // assert(token_reserves == token.balanceOf(address(this)));
+        // assert(eth_reserves == address(this).balance);
     }
+    // function removeLiquidity(uint amountETH, uint max_exchange_rate, uint min_exchange_rate)
+    //     public 
+    //     payable
+    // {
+    //     /******* TODO: Implement this function *******/
+    //     require(amountETH < address(this).balance, "not enough ETH in pool");
+    //     uint equivalent_token = amountETH*token.balanceOf(address(this))*PCT/address(this).balance;
+    //     require(equivalent_token >= min_exchange_rate*amountETH, "exchange rate too low");
+    //     require(equivalent_token <= max_exchange_rate*amountETH, "exchange rate too high");
+    //     uint reward_token = lpr[msg.sender]["token"]*PCT*amountETH/(swap_fee_denominator*lps[msg.sender]*address(this).balance);
+    //     uint reward_ETH = lpr[msg.sender]["ETH"]*PCT*amountETH/(swap_fee_denominator*lps[msg.sender]*address(this).balance);
+    //     equivalent_token = (equivalent_token+reward_token)/PCT;
+    //     amountETH += reward_ETH/swap_fee_denominator;
+    //     require(equivalent_token < token.balanceOf(address(this)), "not enough token in pool");
+    //     require(lps[msg.sender] >= amountETH*MULTIPLIER/address(this).balance, "not enough liquidity in account");
+    //     lps[msg.sender] -= amountETH*MULTIPLIER/address(this).balance;
+    //     lpr[msg.sender]["token"] -= reward_token;
+    //     lpr[msg.sender]["ETH"] -= reward_ETH;
+    //     if (lps[msg.sender] == 0) {
+    //         for (uint idx = 0; idx < lp_providers.length; idx++){
+    //             if (lp_providers[idx] == msg.sender) {
+    //                 removeLP(idx);
+    //                 break;
+    //             }
+    //         }
+    //     }
+    //     for (uint idx = 0; idx < lp_providers.length; idx++){
+    //         lps[lp_providers[idx]] = lps[lp_providers[idx]] * eth_reserves / (eth_reserves-amountETH);
+    //     }
+    //     token.transfer(msg.sender, equivalent_token);
+    //     token_reserves -= equivalent_token;
+    //     payable(msg.sender).transfer(amountETH);
+    //     eth_reserves -= amountETH;
+    //     k = address(this).balance*token.balanceOf(address(this));
+    //     // assert(token_reserves == token.balanceOf(address(this)));
+    //     // assert(eth_reserves == address(this).balance);
+    // }
+    
 
     // Function removeAllLiquidity: Removes all liquidity that msg.sender is entitled to withdraw
     // You can change the inputs, or the scope of your function, as needed.
@@ -181,10 +222,45 @@ contract TokenExchange is Ownable {
         token_reserves += amountTokens;
         payable(msg.sender).transfer(equivalent_ETH);
         eth_reserves -= equivalent_ETH;
-        assert(token_reserves == token.balanceOf(address(this)));
-        assert(eth_reserves == address(this).balance);
+        // assert(token_reserves == token.balanceOf(address(this)));
+        // assert(eth_reserves == address(this).balance);
     }
-
+    // function swapTokensForETH(uint amountTokens, uint max_exchange_rate)
+    //     external 
+    //     payable
+    // {
+    //     /******* TODO: Implement this function *******/
+    //     require(amountTokens <= token.balanceOf(msg.sender), "not enough token for exchange in your account");
+    //     uint swap_fee_token = amountTokens*swap_fee_numerator;
+    //     uint swap_fee_ETH = eth_reserves*PCT*amountTokens/((token_reserves+amountTokens)*swap_fee_denominator);
+    //     uint equivalent_ETH = eth_reserves*amountTokens*PCT/(token_reserves+amountTokens);
+    //     require(equivalent_ETH <= max_exchange_rate*amountTokens, "exchange rate too high");
+    //     equivalent_ETH = (equivalent_ETH-swap_fee_ETH)/PCT;
+    //     require(equivalent_ETH < eth_reserves, "not enough ETH for exchange in pool");
+    //     token.transferFrom(msg.sender, address(this), amountTokens);
+    //     payable(msg.sender).transfer(equivalent_ETH);
+    //     eth_reserves -= equivalent_ETH;
+    //     for (uint idx = 0; idx < lp_providers.length; idx++){
+    //         lpr[lp_providers[idx]]["token"] += swap_fee_token * lps[lp_providers[idx]];
+    //     }
+    //     uninvested_token += swap_fee_token;
+    //     token_reserves += amountTokens;
+    //     uint ETH_to_invest = uninvested_token*eth_reserves/token_reserves;
+    //     if (uninvested_ETH < ETH_to_invest){
+    //         eth_reserves += uninvested_ETH/swap_fee_denominator;
+    //         token_reserves += uninvested_ETH*token_reserves/(eth_reserves*swap_fee_denominator);
+    //         uninvested_ETH = 0;
+    //         uninvested_token -= uninvested_ETH*token_reserves/(eth_reserves*swap_fee_denominator);
+    //     }else{
+    //         eth_reserves += ETH_to_invest/swap_fee_denominator;
+    //         token_reserves += uninvested_token/swap_fee_denominator;
+    //         uninvested_token = 0;
+    //         uninvested_ETH -= ETH_to_invest/swap_fee_denominator;
+    //     }
+    //     token_reserves -= swap_fee_token/swap_fee_denominator;
+    //     // assert(token_reserves == token.balanceOf(address(this)));
+    //     // assert(eth_reserves == address(this).balance);
+    // }
 
 
     // Function swapETHForTokens: Swaps ETH for your tokens
@@ -202,7 +278,41 @@ contract TokenExchange is Ownable {
         eth_reserves += msg.value;
         token.transfer(msg.sender, equivalent_token);
         token_reserves -= equivalent_token;
-        assert(token_reserves == token.balanceOf(address(this)));
-        assert(eth_reserves == address(this).balance);
+        // assert(token_reserves == token.balanceOf(address(this)));
+        // assert(eth_reserves == address(this).balance);
     }
+    // function swapETHForTokens(uint max_exchange_rate)
+    //     external
+    //     payable 
+    // {
+    //     /******* TODO: Implement this function *******/
+    //     uint swap_fee_ETH = msg.value*swap_fee_numerator;
+    //     uint swap_fee_token = token_reserves*PCT*msg.value/((eth_reserves+msg.value)*swap_fee_denominator);
+    //     uint equivalent_token = token_reserves*msg.value*PCT/(eth_reserves+msg.value);
+    //     require(equivalent_token <= max_exchange_rate*msg.value, "exchange rate too high");
+    //     equivalent_token = (equivalent_token-swap_fee_token)/PCT;
+    //     require(equivalent_token < token_reserves, "not enough token for exchange in pool");
+    //     token.transfer(msg.sender, equivalent_token);
+    //     token_reserves -= equivalent_token;
+    //     for (uint idx = 0; idx < lp_providers.length; idx++){
+    //         lpr[lp_providers[idx]]["ETH"] += swap_fee_ETH * lps[lp_providers[idx]];
+    //     }
+    //     uninvested_ETH += swap_fee_ETH;
+    //     eth_reserves += msg.value;
+    //     uint token_to_invest = uninvested_ETH*token_reserves/eth_reserves;
+    //     if (uninvested_token < token_to_invest) {
+    //         token_reserves += uninvested_token/swap_fee_denominator;
+    //         eth_reserves += uninvested_token*eth_reserves/(token_reserves*swap_fee_denominator);
+    //         uninvested_token = 0;
+    //         uninvested_ETH -= uninvested_token*eth_reserves/(token_reserves*swap_fee_denominator);
+    //     }else{
+    //         token_reserves += token_to_invest/swap_fee_denominator;
+    //         eth_reserves += uninvested_ETH/swap_fee_denominator;
+    //         uninvested_ETH = 0;
+    //         uninvested_token -= token_to_invest/swap_fee_denominator;
+    //     }
+    //     eth_reserves -= swap_fee_ETH/swap_fee_denominator;
+    //     // assert(token_reserves == token.balanceOf(address(this)));
+    //     // assert(eth_reserves == address(this).balance);
+    // }
 }
