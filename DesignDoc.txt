@@ -28,6 +28,9 @@ uninvested_token and uninvested_eth will be reinvested back into the pool along 
 
 
 # TODO: answer question 3 here
+We have minimized the exchange contract's gas usage by reducing the number of calls to check the token address's balance. For example, to check if 
+there is enough token for swapping, we can simply check our local token_reserve field instead of incurring an extra balance call. Furthermore,
+k can be computed using token_reserve*eth_reserve which also avoids balance calls. 
 
 
 4. Optional Feedback:
